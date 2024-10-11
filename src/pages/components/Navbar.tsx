@@ -11,17 +11,17 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex-shrink-0 flex items-center">
-            <h1 className="text-xl font-semibold">MyApp</h1>
+            <h1 className="text-xl font-semibold">Admin</h1>
           </div>
           <div className="hidden md:flex space-x-4 items-center">
             <Link href="/" className="text-gray-800 hover:text-gray-600">
               Home
             </Link>
-            <Link href="/about" className="text-gray-800 hover:text-gray-600">
-              About
-            </Link>
-            <Link href="/contact" className="text-gray-800 hover:text-gray-600">
-              Contact
+            <Link
+              href="/admin/tournament"
+              className="text-gray-800 hover:text-gray-600"
+            >
+              Tournament
             </Link>
           </div>
           <div className="flex items-center md:hidden">
@@ -47,16 +47,10 @@ function Navbar() {
               Home
             </Link>
             <Link
-              href="/about"
+              href="/admin/tournament"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-100"
             >
-              About
-            </Link>
-            <Link
-              href="/contact"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-800 hover:text-gray-600 hover:bg-gray-100"
-            >
-              Contact
+              Tournament
             </Link>
           </div>
         </div>
