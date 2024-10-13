@@ -90,3 +90,8 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.sheet-content {
+  width: 800px !important;
+  max-width: 800px !important;
+}

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { useRouter } from "next/router";
 import Papa from "papaparse";
-import { getDocs, collection, addDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import db from "@/services/firestore";
 import {
   Sheet,
@@ -15,9 +16,12 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableCaption,
   TableHead,
+  TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Upload } from "lucide-react";
 
 interface Player {
   firstName: string;
@@ -36,22 +40,14 @@ interface AddPlayerProps {
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
 }
 
-export const AddPlayer: React.FC<AddPlayerProps> = ({ setPlayers }) => {
+export const AddPlayer: React.FC<AddPlayerProps> = () => {
+  const router = useRouter();
+  const { id: tournament_id } = router.query;
+
   const [teams, setTeams] = useState<{ [key: string]: Team }>({});
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<Player[]>([]);
-  const [isSheetOpen, setIsSheetOpen] = useState(false); // State to control the sheet
-
-  const fetchTeams = async () => {
-    const teamData: { [key: string]: Team } = {};
-    const teamCollection = collection(db, "teams");
-    const teamSnapshot = await getDocs(teamCollection);
-    teamSnapshot.docs.forEach((doc) => {
-      const team = { id: doc.id, ...doc.data() } as Team;
-      teamData[team.team_name] = team;
-    });
-    setTeams(teamData);
-  };
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const getTeamId = async (team_name: string) => {
     if (teams[team_name]) {
@@ -83,85 +79,116 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({ setPlayers }) => {
   const handleSubmit = async () => {
     if (parsedData.length > 0) {
       for (const player of parsedData) {
-        if (player.team_name) {
-          const team_id = await getTeamId(player.team_name);
-          try {
-            await addDoc(collection(db, "players"), {
-              firstName: player.firstName,
-              lastName: player.lastName,
-              nationality: player.nationality,
-              dob: player.dob,
-              team_id,
-            });
-            console.log(`Player added: ${player.firstName} ${player.lastName}`);
-          } catch (error) {
-            console.error("Error adding player:", error);
-          }
+        const team_id = player.team_name
+          ? await getTeamId(player.team_name)
+          : undefined;
+
+        try {
+          await addDoc(collection(db, "players"), {
+            ...player,
+            team_id,
+            tournament_id,
+          });
+        } catch (error) {
+          console.error("Error adding player:", error);
         }
       }
-      // อัปเดตข้อมูลผู้เล่นหลังจากการ Submit
-      const playerCollection = collection(db, "players");
-      const playerSnapshot = await getDocs(playerCollection);
-      const playerList = playerSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Player[];
-      setPlayers(playerList);
-
-      // Close the sheet after submission
       setIsSheetOpen(false);
     }
   };
 
+  // ฟังก์ชันสำหรับรีเซ็ตข้อมูล
+  const resetState = () => {
+    setCsvFile(null);
+    setParsedData([]);
+  };
+
   return (
-    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+    <Sheet
+      open={isSheetOpen}
+      onOpenChange={(open) => {
+        setIsSheetOpen(open);
+        if (!open) resetState(); // รีเซ็ตข้อมูลเมื่อปิด Sheet
+      }}
+    >
       <SheetTrigger asChild>
-        <Button className="mt-4" onClick={() => setIsSheetOpen(true)}>
-          Import Players
+        <Button variant="default" className="flex items-center space-x-2">
+          <Upload className="w-5 h-5" />
+          <span>Import Players</span>
         </Button>
       </SheetTrigger>
-      <SheetContent className="bg-white w-[50%] p-6">
-        <SheetHeader>
-          <SheetTitle>Import CSV File</SheetTitle>
+      <SheetContent className="sheet-content bg-white p-8 max-w-3xl mx-auto rounded-lg">
+        <SheetHeader className="text-center">
+          <SheetTitle className="text-2xl font-semibold">
+            Import Players from CSV
+          </SheetTitle>
         </SheetHeader>
-        <div>
+        <div className="mt-6">
           <input
             type="file"
             accept=".csv"
             onChange={handleFileChange}
-            className="mt-4 border p-2"
+            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           />
+          {csvFile && (
+            <p className="mt-2 text-sm text-gray-600">
+              Selected file: <strong>{csvFile.name}</strong>
+            </p>
+          )}
         </div>
 
         {parsedData.length > 0 && (
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold">Preview CSV Data</h3>
-            <Table className="table-auto w-full mt-2">
-              <TableHead>
-                <TableRow>
-                  <TableCell>First Name</TableCell>
-                  <TableCell>Last Name</TableCell>
-                  <TableCell>Nationality</TableCell>
-                  <TableCell>Date of Birth</TableCell>
-                  <TableCell>Team Name</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {parsedData.map((player, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{player.firstName}</TableCell>
-                    <TableCell>{player.lastName}</TableCell>
-                    <TableCell>{player.nationality}</TableCell>
-                    <TableCell>{player.dob}</TableCell>
-                    <TableCell>{player.team_name}</TableCell>
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-4">Player Preview</h3>
+            <div className="overflow-x-auto">
+              <Table className="table-fixed w-full border-collapse border border-gray-300">
+                <TableCaption>A preview of imported players.</TableCaption>
+                <TableHeader>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="w-1/5 px-6 py-3">
+                      First Name
+                    </TableHead>
+                    <TableHead className="w-1/5 px-6 py-3">Last Name</TableHead>
+                    <TableHead className="w-1/5 px-6 py-3">
+                      Nationality
+                    </TableHead>
+                    <TableHead className="w-1/5 px-6 py-3">
+                      Date of Birth
+                    </TableHead>
+                    <TableHead className="w-1/5 px-6 py-3">Team Name</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {parsedData.map((player, index) => (
+                    <TableRow
+                      key={index}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <TableCell className="border px-6 py-2 text-left">
+                        {player.firstName}
+                      </TableCell>
+                      <TableCell className="border px-6 py-2 text-left">
+                        {player.lastName}
+                      </TableCell>
+                      <TableCell className="border px-6 py-2 text-left">
+                        {player.nationality}
+                      </TableCell>
+                      <TableCell className="border px-6 py-2 text-left">
+                        {player.dob}
+                      </TableCell>
+                      <TableCell className="border px-6 py-2 text-left">
+                        {player.team_name}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         )}
-        <SheetFooter>
-          <Button onClick={handleSubmit} className="mt-4">
+
+        <SheetFooter className="mt-6">
+          <Button onClick={handleSubmit} className="w-full">
             Submit
           </Button>
         </SheetFooter>

@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react"; // Import Lucide Settings icon
+import { Settings, Users } from "lucide-react"; // Replace Upload with Users icon
 import AddTournamentList from "./AddTournamentList";
 import Link from "next/link"; // Import Next.js Link
 
@@ -49,7 +49,7 @@ const TournamentList: React.FC = () => {
         {tournaments.map((tournament) => (
           <Card
             key={tournament.id}
-            className="shadow-lg border border-gray-200 rounded-lg"
+            className="shadow-lg border border-gray-200 rounded-2xl"
           >
             <CardHeader>
               <CardTitle className="text-lg font-bold">
@@ -66,15 +66,25 @@ const TournamentList: React.FC = () => {
                 End Date: {new Date(tournament.end_date).toLocaleDateString()}
               </p>
             </CardContent>
-            <CardFooter className="flex justify-between">
-              {/* Use Next.js Link to navigate to the dynamic tournament detail page */}
+            <CardFooter className="flex justify-between space-x-2">
+              {/* Link to Manage Tournament */}
               <Link href={`/admin/tournament/${tournament.id}`}>
                 <Button
-                  variant="secondary"
+                  variant="default"
                   className="flex items-center space-x-2"
                 >
                   <Settings className="w-5 h-5" />
                   <span>Manage Tournament</span>
+                </Button>
+              </Link>
+              {/* Button to Import Players using Users icon */}
+              <Link href={`/admin/players/${tournament.id}`}>
+                <Button
+                  variant="default"
+                  className="flex items-center space-x-2"
+                >
+                  <Users className="w-5 h-5" /> {/* Use the Users icon */}
+                  <span>Players</span>
                 </Button>
               </Link>
             </CardFooter>
