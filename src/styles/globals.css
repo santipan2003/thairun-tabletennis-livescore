@@ -95,3 +95,8 @@ body {
   width: 800px !important;
   max-width: 800px !important;
 }
+
+.sheet-content-v2 {
+  width: 900px !important;
+  max-width: 900px !important;
+}
