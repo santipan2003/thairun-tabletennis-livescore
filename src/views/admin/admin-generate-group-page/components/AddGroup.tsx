@@ -1,4 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { getDocs, collection, addDoc } from "firebase/firestore";
+import db from "@/services/firestore";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -6,16 +11,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getDocs, collection } from "firebase/firestore";
-import db from "@/services/firestore";
-import { Player } from "@/pages/types";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRouter } from "next/router";
+
+interface Player {
+  player_id: string;
+  firstName: string;
+  lastName: string;
+  nationality: string;
+  dob: string;
+  team_name?: string;
+  category: string;
+  division: string;
+  rank_score?: number;
+  rank_number?: number;
+  group?: string;
+}
+
+interface PlayerWithStats extends Player {
+  matches: number;
+  wins: number;
+  losses: number;
+  points_diff: number; // Points difference (e.g., +/- score)
+}
 
 interface Group {
+  group_id: number;
   name: string;
-  players: Player[];
+  players: PlayerWithStats[];
+  category: string;
+  division: string;
 }
 
 const AddGroup: React.FC = () => {
@@ -26,17 +49,28 @@ const AddGroup: React.FC = () => {
   const [divisions, setDivisions] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedDivisions, setSelectedDivisions] = useState<string[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<PlayerWithStats[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [canGenerate, setCanGenerate] = useState(false);
 
+  // Fetch player data from Firestore
   const fetchPlayerData = async () => {
     const playerCollection = collection(
       db,
       `tournaments/${tournamentId}/players`
     );
     const snapshot = await getDocs(playerCollection);
-    const playerList = snapshot.docs.map((doc) => doc.data() as Player);
+    const playerList = snapshot.docs.map((doc) => {
+      const data = doc.data() as Player;
+      return {
+        ...data,
+        player_id: doc.id,
+        matches: 0,
+        wins: 0,
+        losses: 0,
+        points_diff: 0, // Default value
+      };
+    }) as PlayerWithStats[];
 
     const uniqueCategories = Array.from(
       new Set(playerList.map((player) => player.category))
@@ -62,6 +96,7 @@ const AddGroup: React.FC = () => {
     );
   }, [selectedCategories, selectedDivisions]);
 
+  // Generate groups based on the same group value
   const generateGroups = () => {
     const filteredPlayers = players.filter(
       (player) =>
@@ -70,22 +105,60 @@ const AddGroup: React.FC = () => {
     );
 
     const groupedPlayers = filteredPlayers.reduce((acc, player) => {
-      const groupName = player.group || "Unassigned";
-      if (!acc[groupName]) acc[groupName] = [];
-      acc[groupName].push(player);
+      const groupId = parseInt(player.group?.toString() ?? "0");
+      if (!acc[groupId]) acc[groupId] = [];
+      acc[groupId].push(player);
       return acc;
-    }, {} as Record<string, Player[]>);
+    }, {} as Record<number, PlayerWithStats[]>);
 
-    const generatedGroups: Group[] = Object.entries(groupedPlayers).map(
-      ([groupName, groupPlayers]) => ({
-        name: groupName,
+    const generatedGroups: Group[] = Object.entries(groupedPlayers)
+      .map(([groupId, groupPlayers]) => ({
+        group_id: parseInt(groupId),
+        name: `Group ${groupId}`,
         players: groupPlayers.sort(
           (a, b) => (b.rank_score ?? 0) - (a.rank_score ?? 0)
         ),
-      })
-    );
+        category: groupPlayers[0]?.category || "N/A",
+        division: groupPlayers[0]?.division || "N/A",
+      }))
+      .sort((a, b) => a.group_id - b.group_id);
 
     setGroups(generatedGroups);
+  };
+
+  // Submit generated groups to Firestore
+  const submitGroups = async () => {
+    try {
+      const groupCollection = collection(
+        db,
+        `tournaments/${tournamentId}/groups`
+      );
+
+      for (const group of groups) {
+        const groupDoc = await addDoc(groupCollection, {
+          group_id: group.group_id,
+          group_name: group.name,
+          category: group.category,
+          division: group.division,
+          players: group.players.map((player) => player.player_id),
+        });
+
+        const playerCollection = collection(
+          db,
+          `tournaments/${tournamentId}/groups/${groupDoc.id}/players`
+        );
+
+        for (const player of group.players) {
+          await addDoc(playerCollection, { ...player });
+        }
+      }
+
+      alert("Groups submitted successfully!");
+      router.back();
+    } catch (error) {
+      console.error("Error submitting groups:", error);
+      alert("Failed to submit groups.");
+    }
   };
 
   return (
@@ -95,10 +168,7 @@ const AddGroup: React.FC = () => {
       <div className="space-y-6">
         <div className="flex flex-col">
           <label className="text-gray-700 font-medium mb-2">Category</label>
-          <Select
-            multiple
-            onValueChange={(values) => setSelectedCategories(values)}
-          >
+          <Select onValueChange={(value) => setSelectedCategories([value])}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select categories" />
             </SelectTrigger>
@@ -114,10 +184,7 @@ const AddGroup: React.FC = () => {
 
         <div className="flex flex-col">
           <label className="text-gray-700 font-medium mb-2">Division</label>
-          <Select
-            multiple
-            onValueChange={(values) => setSelectedDivisions(values)}
-          >
+          <Select onValueChange={(value) => setSelectedDivisions([value])}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select divisions" />
             </SelectTrigger>
@@ -134,28 +201,26 @@ const AddGroup: React.FC = () => {
 
       {canGenerate && (
         <div className="mt-8 flex justify-end">
-          <Button onClick={generateGroups} variant="default">
-            Generate Group
-          </Button>
+          <Button onClick={generateGroups}>Generate Group</Button>
         </div>
       )}
 
       {groups.length > 0 && (
         <div className="mt-8">
           <h2 className="text-lg font-semibold mb-4">Generated Groups</h2>
-          <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 overflow-y-auto"
-            style={{ maxHeight: "500px" }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {groups.map((group) => (
               <Card
-                key={group.name}
-                className="shadow-lg border border-gray-200 rounded-2xl"
+                key={group.group_id}
+                className="shadow-lg border rounded-2xl"
               >
                 <CardHeader>
                   <CardTitle className="text-lg font-bold">
                     {group.name}
                   </CardTitle>
+                  <p className="text-sm text-gray-500">
+                    {group.category} | {group.division}
+                  </p>
                 </CardHeader>
                 <CardContent>
                   {group.players.length > 0 ? (
@@ -163,11 +228,14 @@ const AddGroup: React.FC = () => {
                       {group.players.map((player) => (
                         <li key={player.player_id} className="text-sm">
                           {player.firstName} {player.lastName} -{" "}
-                          {player.nationality} (Score:{" "}
-                          {typeof player.rank_score === "number"
-                            ? player.rank_score.toFixed(2)
-                            : player.rank_score}
-                          )
+                          {player.nationality}
+                          (Score:{" "}
+                          {parseFloat(
+                            player.rank_score?.toString() || "0"
+                          ).toFixed(2)}
+                          ) [Matches: {player.matches}, Wins: {player.wins},
+                          Losses: {player.losses}, Points Diff:{" "}
+                          {player.points_diff}]
                         </li>
                       ))}
                     </ul>
@@ -179,6 +247,10 @@ const AddGroup: React.FC = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+
+          <div className="mt-8 flex justify-end">
+            <Button onClick={submitGroups}>Submit Groups</Button>
           </div>
         </div>
       )}

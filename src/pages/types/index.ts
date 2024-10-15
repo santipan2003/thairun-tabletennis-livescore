@@ -9,7 +9,6 @@ export interface Tournament {
 
 export interface Player {
   player_id: number;
-  rank_number?: number;
   firstName: string;
   lastName: string;
   nationality: string;
@@ -18,5 +17,6 @@ export interface Player {
   category: string;
   division: string;
   rank_score?: number;
-  group: string;
+  rank_number?: number;
+  group?: string;
 }
