@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import Papa from "papaparse";
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import db from "@/services/firestore";
 import {
   Sheet,
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Upload } from "lucide-react";
 
+// Define Player interface with the required fields
 interface Player {
   player_id: number;
   firstName: string;
@@ -32,11 +33,9 @@ interface Player {
   team_name?: string;
   category: string;
   division: string;
-}
-
-interface Team {
-  id: string;
-  team_name: string;
+  rank_score?: number;
+  rank_number?: number;
+  group?: string;
 }
 
 interface AddPlayerProps {
@@ -51,44 +50,24 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
   const router = useRouter();
   const { id: tournament_id } = router.query;
 
-  const [teams, setTeams] = useState<{ [key: string]: Team }>({});
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<Player[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  // Function to check if the team exists or create a new one
-  const getTeamId = async (team_name: string): Promise<string> => {
-    // Check if the team is already in the local state
-    if (teams[team_name]) {
-      return teams[team_name].id;
-    }
-
-    // Query Firestore to see if the team exists
-    const teamQuery = query(
-      collection(db, "teams"),
-      where("team_name", "==", team_name)
-    );
-    const querySnapshot = await getDocs(teamQuery);
-
-    if (!querySnapshot.empty) {
-      const existingTeam = querySnapshot.docs[0];
-      const teamId = existingTeam.id;
-      setTeams((prevTeams) => ({
-        ...prevTeams,
-        [team_name]: { id: teamId, team_name },
-      }));
-      return teamId;
-    } else {
-      // If the team doesn't exist, create a new one
-      const newTeamRef = await addDoc(collection(db, "teams"), { team_name });
-      const newTeamId = newTeamRef.id;
-      setTeams((prevTeams) => ({
-        ...prevTeams,
-        [team_name]: { id: newTeamId, team_name },
-      }));
-      return newTeamId;
-    }
-  };
+  // Validate and Clean Data
+  const validatePlayerData = (player: Partial<Player>): Player => ({
+    player_id: player.player_id ?? 0,
+    firstName: player.firstName ?? "Unknown",
+    lastName: player.lastName ?? "Unknown",
+    nationality: player.nationality ?? "Unknown",
+    dob: player.dob ?? "N/A",
+    team_name: player.team_name ?? "N/A",
+    category: player.category ?? "Uncategorized",
+    division: player.division ?? "Undivided",
+    rank_score: player.rank_score ?? 0,
+    rank_number: player.rank_number ?? 0,
+    group: player.group ?? "Not Assigned",
+  });
 
   // Handle CSV File Upload
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,9 +75,11 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
       setCsvFile(event.target.files[0]);
       Papa.parse(event.target.files[0], {
         header: true,
+        skipEmptyLines: true,
         complete: (results) => {
-          const data = results.data as Player[];
-          setParsedData(data);
+          const data = results.data as Partial<Player>[];
+          const processedData = data.map(validatePlayerData);
+          setParsedData(processedData);
         },
       });
     }
@@ -110,14 +91,9 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
       const newPlayers: Player[] = [];
 
       for (const player of parsedData) {
-        const team_id = player.team_name
-          ? await getTeamId(player.team_name)
-          : undefined;
-
         try {
           await addDoc(collection(db, `tournaments/${tournament_id}/players`), {
             ...player,
-            team_id,
           });
           newPlayers.push(player);
         } catch (error) {
@@ -126,8 +102,8 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
       }
 
       setPlayers((prevPlayers) => [...prevPlayers, ...newPlayers]);
-      setIsSheetOpen(false); // Close the sheet
-      onSuccess(); // Refresh player list
+      setIsSheetOpen(false);
+      onSuccess();
     }
   };
 
@@ -141,7 +117,7 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
       open={isSheetOpen}
       onOpenChange={(open) => {
         setIsSheetOpen(open);
-        if (!open) resetState(); // Reset state when sheet closes
+        if (!open) resetState();
       }}
     >
       <SheetTrigger asChild>
@@ -180,47 +156,37 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
                 <TableCaption>A preview of imported players.</TableCaption>
                 <TableHeader>
                   <TableRow className="bg-gray-100">
-                    <TableHead className="w-1/8 px-6 py-3">ID</TableHead>
-                    <TableHead className="w-1/8 px-6 py-3">
-                      First Name
-                    </TableHead>
-                    <TableHead className="w-1/8 px-6 py-3">Last Name</TableHead>
-                    <TableHead className="w-1/8 px-6 py-3">
-                      Nationality
-                    </TableHead>
-                    <TableHead className="w-1/8 px-6 py-3">DOB</TableHead>
-                    <TableHead className="w-1/8 px-6 py-3">Team Name</TableHead>
-                    <TableHead className="w-1/8 px-6 py-3">Category</TableHead>
-                    <TableHead className="w-1/8 px-6 py-3">Division</TableHead>
+                    <TableHead>Player ID</TableHead>
+                    <TableHead>Rank No.</TableHead>
+                    <TableHead>First Name</TableHead>
+                    <TableHead>Last Name</TableHead>
+                    <TableHead>Nationality</TableHead>
+                    <TableHead>DOB</TableHead>
+                    <TableHead>Team</TableHead>
+                    <TableHead>Rank Score</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Division</TableHead>
+                    <TableHead>Group</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {parsedData.map((player, index) => (
                     <TableRow key={index} className="hover:bg-gray-50">
-                      <TableCell className="border px-6 py-2">
-                        {player.player_id}
+                      <TableCell>{player.player_id}</TableCell>
+                      <TableCell>{player.rank_number}</TableCell>
+                      <TableCell>{player.firstName}</TableCell>
+                      <TableCell>{player.lastName}</TableCell>
+                      <TableCell>{player.nationality}</TableCell>
+                      <TableCell>{player.dob}</TableCell>
+                      <TableCell>{player.team_name}</TableCell>
+                      <TableCell>
+                        {typeof player.rank_score === "number"
+                          ? player.rank_score.toFixed(2)
+                          : player.rank_score}
                       </TableCell>
-                      <TableCell className="border px-6 py-2">
-                        {player.firstName}
-                      </TableCell>
-                      <TableCell className="border px-6 py-2">
-                        {player.lastName}
-                      </TableCell>
-                      <TableCell className="border px-6 py-2">
-                        {player.nationality}
-                      </TableCell>
-                      <TableCell className="border px-6 py-2">
-                        {player.dob}
-                      </TableCell>
-                      <TableCell className="border px-6 py-2">
-                        {player.team_name}
-                      </TableCell>
-                      <TableCell className="border px-6 py-2">
-                        {player.category}
-                      </TableCell>
-                      <TableCell className="border px-6 py-2">
-                        {player.division}
-                      </TableCell>
+                      <TableCell>{player.category}</TableCell>
+                      <TableCell>{player.division}</TableCell>
+                      <TableCell>{player.group}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

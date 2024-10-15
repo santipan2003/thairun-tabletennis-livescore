@@ -12,14 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Settings, Users } from "lucide-react"; // Replace Upload with Users icon
 import AddTournamentList from "./AddTournamentList";
 import Link from "next/link"; // Import Next.js Link
-
-interface Tournament {
-  id: string;
-  tournament_name: string;
-  table_count: number;
-  start_date: string;
-  end_date: string;
-}
+import { Tournament } from "@/pages/types";
 
 const TournamentList: React.FC = () => {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -66,7 +59,7 @@ const TournamentList: React.FC = () => {
                 End Date: {new Date(tournament.end_date).toLocaleDateString()}
               </p>
             </CardContent>
-            <CardFooter className="flex justify-between space-x-2">
+            <CardFooter className="flex flex-col items-start space-y-2">
               {/* Link to Manage Tournament */}
               <Link href={`/admin/tournament/${tournament.id}`}>
                 <Button
@@ -77,14 +70,26 @@ const TournamentList: React.FC = () => {
                   <span>Manage Tournament</span>
                 </Button>
               </Link>
+
               {/* Button to Import Players using Users icon */}
               <Link href={`/admin/players/${tournament.id}`}>
                 <Button
                   variant="default"
                   className="flex items-center space-x-2"
                 >
-                  <Users className="w-5 h-5" /> {/* Use the Users icon */}
-                  <span>Players</span>
+                  <Users className="w-5 h-5" />
+                  <span>Manage Players</span>
+                </Button>
+              </Link>
+
+              {/* Button to Manage Groups */}
+              <Link href={`/admin/groups/${tournament.id}`}>
+                <Button
+                  variant="default"
+                  className="flex items-center space-x-2"
+                >
+                  <Users className="w-5 h-5" />
+                  <span>Manage Group</span>
                 </Button>
               </Link>
             </CardFooter>

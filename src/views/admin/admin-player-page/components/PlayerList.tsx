@@ -12,18 +12,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"; // Shadcn pagination components
-
-interface Player {
-  player_id: number;
-  firstName: string;
-  lastName: string;
-  nationality: string;
-  dob: string;
-  team_id?: string;
-  team_name?: string;
-  category: string;
-  division: string;
-}
+import { Player } from "@/pages/types";
 
 const PlayerListPage: React.FC = () => {
   const router = useRouter();
@@ -31,6 +20,8 @@ const PlayerListPage: React.FC = () => {
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [tournamentName, setTournamentName] = useState("");
+   const [category, setCategory] = useState("");
+  const [division, setDivision] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -45,7 +36,32 @@ const PlayerListPage: React.FC = () => {
     );
     const snapshot = await getDocs(playerCollection);
     const playerList = snapshot.docs.map((doc) => doc.data() as Player);
-    setPlayers(playerList);
+
+    // Group players by their group
+    const groupedPlayers: { [key: string]: Player[] } = {};
+    playerList.forEach((player) => {
+      const group = player.group ?? "Not Assigned";
+      if (!groupedPlayers[group]) {
+        groupedPlayers[group] = [];
+      }
+      groupedPlayers[group].push(player);
+    });
+
+    // Sort each group by rank_score in descending order
+    Object.keys(groupedPlayers).forEach((group) => {
+      groupedPlayers[group].sort(
+        (a, b) => (b.rank_score ?? 0) - (a.rank_score ?? 0)
+      );
+    });
+
+    // Flatten the sorted groups back into a single array
+    const sortedPlayers = Object.values(groupedPlayers).flat();
+    setPlayers(sortedPlayers);
+
+     if (playerList.length > 0) {
+      setCategory(playerList[0].category);
+      setDivision(playerList[0].division);
+    }
   };
 
   // Fetch tournament name
@@ -73,7 +89,7 @@ const PlayerListPage: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">{tournamentName} - Player List</h1>
+        <h1 className="text-2xl font-bold">{tournamentName} - Player List ({category} , {division}) </h1>
         <AddPlayer setPlayers={setPlayers} onSuccess={fetchPlayers} />
       </div>
 
@@ -81,9 +97,7 @@ const PlayerListPage: React.FC = () => {
         <table className="min-w-full divide-y divide-gray-200 bg-white shadow-lg rounded-lg border border-gray-300">
           <thead className="bg-gray-100">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider border border-gray-300">
-                Player ID
-              </th>
+             
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider border border-gray-300">
                 Firstname
               </th>
@@ -100,10 +114,13 @@ const PlayerListPage: React.FC = () => {
                 Team
               </th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider border border-gray-300">
-                Category
+                Rank Score
+              </th>
+               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider border border-gray-300">
+                Ranking No.
               </th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider border border-gray-300">
-                Division
+                Group
               </th>
             </tr>
           </thead>
@@ -114,9 +131,8 @@ const PlayerListPage: React.FC = () => {
                   key={index}
                   className="hover:bg-gray-100 transition duration-150 ease-in-out"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border border-gray-300">
-                    {player.player_id}
-                  </td>
+                 
+                 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border border-gray-300">
                     {player.firstName}
                   </td>
@@ -132,18 +148,22 @@ const PlayerListPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border border-gray-300">
                     {player.team_name || "N/A"}
                   </td>
+                
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border border-gray-300">
-                    {player.category}
+                    {player.rank_score}
+                  </td>
+                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border border-gray-300">
+                    {player.rank_number}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border border-gray-300">
-                    {player.division}
+                    {player.group}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="px-6 py-10 text-center text-sm text-gray-500"
                 >
                   No players have been added to this tournament yet.
