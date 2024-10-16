@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Settings, Users } from "lucide-react"; // Replace Upload with Users icon
 import AddTournamentList from "./AddTournamentList";
 import Link from "next/link"; // Import Next.js Link
-import { Tournament } from "@/pages/types";
+import { Tournament } from "@/types"; // Import Tournament type from types/index.ts
 
 const TournamentList: React.FC = () => {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);

@@ -12,7 +12,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"; // Shadcn pagination components
-import { Player } from "@/pages/types";
+import { Player } from "@/types";
 
 const PlayerListPage: React.FC = () => {
   const router = useRouter();

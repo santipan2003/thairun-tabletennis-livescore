@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { getDocs, collection, doc, getDoc } from "firebase/firestore";
 import db from "@/services/firestore";
-import { Player } from "@/pages/types";
+import { Player } from "@/types";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
