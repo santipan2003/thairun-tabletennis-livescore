@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { getDocs, collection } from "firebase/firestore";
 import db from "@/services/firestore";
@@ -20,7 +20,7 @@ const PlayerListPage: React.FC = () => {
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [tournamentName, setTournamentName] = useState("");
-   const [category, setCategory] = useState("");
+  const [category, setCategory] = useState("");
   const [division, setDivision] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -28,7 +28,7 @@ const PlayerListPage: React.FC = () => {
   const totalPages = Math.ceil(players.length / itemsPerPage);
 
   // Fetch players from Firestore
-  const fetchPlayers = async () => {
+  const fetchPlayers = useCallback(async () => {
     if (!tournament_id) return;
     const playerCollection = collection(
       db,
@@ -58,24 +58,24 @@ const PlayerListPage: React.FC = () => {
     const sortedPlayers = Object.values(groupedPlayers).flat();
     setPlayers(sortedPlayers);
 
-     if (playerList.length > 0) {
+    if (playerList.length > 0) {
       setCategory(playerList[0].category);
       setDivision(playerList[0].division);
     }
-  };
+  }, [tournament_id]);
 
   // Fetch tournament name
-  const fetchTournamentName = async () => {
+  const fetchTournamentName = useCallback(async () => {
     const tournamentRef = collection(db, "tournaments");
     const snapshot = await getDocs(tournamentRef);
     const tournament = snapshot.docs.find((doc) => doc.id === tournament_id);
     if (tournament) setTournamentName(tournament.data().tournament_name);
-  };
+  }, [tournament_id]);
 
   useEffect(() => {
     fetchPlayers();
     fetchTournamentName();
-  }, [tournament_id]);
+  }, [tournament_id, fetchPlayers, fetchTournamentName]);
 
   const paginatedPlayers = players.slice(
     (currentPage - 1) * itemsPerPage,
@@ -89,7 +89,9 @@ const PlayerListPage: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">{tournamentName} - Player List ({category} , {division}) </h1>
+        <h1 className="text-2xl font-bold">
+          {tournamentName} - Player List ({category}, {division})
+        </h1>
         <AddPlayer setPlayers={setPlayers} onSuccess={fetchPlayers} />
       </div>
 
@@ -97,7 +99,6 @@ const PlayerListPage: React.FC = () => {
         <table className="min-w-full divide-y divide-gray-200 bg-white shadow-lg rounded-lg border border-gray-300">
           <thead className="bg-gray-100">
             <tr>
-             
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider border border-gray-300">
                 Firstname
               </th>
@@ -116,7 +117,7 @@ const PlayerListPage: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider border border-gray-300">
                 Rank Score
               </th>
-               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider border border-gray-300">
+              <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider border border-gray-300">
                 Ranking No.
               </th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider border border-gray-300">
@@ -131,8 +132,6 @@ const PlayerListPage: React.FC = () => {
                   key={index}
                   className="hover:bg-gray-100 transition duration-150 ease-in-out"
                 >
-                 
-                 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border border-gray-300">
                     {player.firstName}
                   </td>
@@ -148,11 +147,10 @@ const PlayerListPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border border-gray-300">
                     {player.team_name || "N/A"}
                   </td>
-                
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border border-gray-300">
                     {player.rank_score}
                   </td>
-                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border border-gray-300">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border border-gray-300">
                     {player.rank_number}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border border-gray-300">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { getDocs, collection, addDoc } from "firebase/firestore";
 import db from "@/services/firestore";
@@ -55,7 +55,7 @@ const AddGroup: React.FC = () => {
   const [canGenerate, setCanGenerate] = useState(false);
 
   // Fetch player data from Firestore
-  const fetchPlayerData = async () => {
+  const fetchPlayerData = useCallback(async () => {
     const playerCollection = collection(
       db,
       `tournaments/${tournamentId}/players`
@@ -83,13 +83,13 @@ const AddGroup: React.FC = () => {
     setCategories(uniqueCategories);
     setDivisions(uniqueDivisions);
     setPlayers(playerList);
-  };
+  }, [tournamentId]);
 
   useEffect(() => {
     if (tournamentId) {
       fetchPlayerData();
     }
-  }, [tournamentId]);
+  }, [tournamentId, fetchPlayerData]);
 
   useEffect(() => {
     setCanGenerate(
