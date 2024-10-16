@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface Player {
   player_id: string;
@@ -208,14 +209,14 @@ const AddGroup: React.FC = () => {
       {groups.length > 0 && (
         <div className="mt-8">
           <h2 className="text-lg font-semibold mb-4">Generated Groups</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
             {groups.map((group) => (
               <Card
                 key={group.group_id}
-                className="shadow-lg border rounded-2xl"
+                className="shadow-md border border-gray-200 rounded-xl"
               >
                 <CardHeader>
-                  <CardTitle className="text-lg font-bold">
+                  <CardTitle className="text-md font-bold">
                     {group.name}
                   </CardTitle>
                   <p className="text-sm text-gray-500">
@@ -223,27 +224,47 @@ const AddGroup: React.FC = () => {
                   </p>
                 </CardHeader>
                 <CardContent>
-                  {group.players.length > 0 ? (
-                    <ul>
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="border-b pb-2 text-center">Rank</th>
+                        <th className="border-b pb-2 text-center">Player</th>
+                        <th className="border-b pb-2 text-center">M</th>
+                        <th className="border-b pb-2 text-center">W</th>
+                        <th className="border-b pb-2 text-center">L</th>
+                        <th className="border-b pb-2 text-center">+/-</th>
+                        <th className="border-b pb-2 text-center">OVR</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {group.players.map((player) => (
-                        <li key={player.player_id} className="text-sm">
-                          {player.firstName} {player.lastName} -{" "}
-                          {player.nationality}
-                          (Score:{" "}
-                          {parseFloat(
-                            player.rank_score?.toString() || "0"
-                          ).toFixed(2)}
-                          ) [Matches: {player.matches}, Wins: {player.wins},
-                          Losses: {player.losses}, Points Diff:{" "}
-                          {player.points_diff}]
-                        </li>
+                        <tr key={player.player_id} className="hover:bg-gray-50">
+                          <td className="py-2 text-center">
+                            <Badge variant="outline">
+                              {player.rank_number}
+                            </Badge>
+                          </td>
+                          <td className="py-2 text-center">
+                            {player.firstName} {player.lastName}
+                            <p className="text-sm text-gray-500">
+                              {player.nationality}
+                            </p>
+                          </td>
+                          <td className="py-2 text-center">{player.matches}</td>
+                          <td className="py-2 text-center">{player.wins}</td>
+                          <td className="py-2 text-center">{player.losses}</td>
+                          <td className="py-2 text-center">
+                            {player.points_diff}
+                          </td>
+                          <td className="py-2 text-center">
+                            {parseFloat(
+                              player.rank_score?.toString() || "0"
+                            ).toFixed(2)}
+                          </td>
+                        </tr>
                       ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-gray-500">
-                      No players in this group.
-                    </p>
-                  )}
+                    </tbody>
+                  </table>
                 </CardContent>
               </Card>
             ))}

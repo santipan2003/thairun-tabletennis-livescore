@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 
 interface PlayerWithStats extends Player {
   matches: number;
@@ -59,7 +59,7 @@ const GroupListPage: React.FC = () => {
                 ),
               };
             })
-            .sort((a, b) => b.rank_score - a.rank_score); // Sort descending
+            .sort((a, b) => b.rank_score - a.rank_score);
 
           return { ...groupData, players } as Group;
         })
@@ -125,44 +125,49 @@ const GroupListPage: React.FC = () => {
                       {group.category} | {group.division}
                     </p>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    {group.players.length > 0 ? (
-                      <ul className="space-y-4">
+                  <CardContent>
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr>
+                          <th className="border-b pb-2 text-center">Rank</th>
+                          <th className="border-b pb-2 text-center">Player</th>
+                          <th className="border-b pb-2 text-center">M</th>
+                          <th className="border-b pb-2 text-center">W</th>
+                          <th className="border-b pb-2 text-center">L</th>
+                          <th className="border-b pb-2 text-center">+/-</th>
+                        </tr>
+                      </thead>
+                      <tbody>
                         {group.players.map((player) => (
-                          <li key={player.player_id}>
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center space-x-2">
-                                <Badge variant="outline">
-                                  {player.rank_number}
-                                </Badge>
-                                <div>
-                                  <span className="font-medium">
-                                    {player.firstName} {player.lastName}
-                                  </span>
-                                  <p className="text-sm text-gray-500">
-                                    {player.nationality}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p>
-                                  Score: {(player.rank_score ?? 0).toFixed(2)}
-                                </p>
-                                <p>
-                                  M: {player.matches} | W: {player.wins} | L:{" "}
-                                  {player.losses} | +/-: {player.points_diff}
-                                </p>
-                              </div>
-                            </div>
-                            <Separator className="my-2" />
-                          </li>
+                          <tr
+                            key={player.player_id}
+                            className="hover:bg-gray-50"
+                          >
+                            <td className="py-2 text-center">
+                              <Badge variant="outline">
+                                {player.rank_number}
+                              </Badge>
+                            </td>
+                            <td className="py-2 text-center">
+                              {player.firstName} {player.lastName}
+                              <p className="text-sm text-gray-500">
+                                {player.nationality}
+                              </p>
+                            </td>
+                            <td className="py-2 text-center">
+                              {player.matches}
+                            </td>
+                            <td className="py-2 text-center">{player.wins}</td>
+                            <td className="py-2 text-center">
+                              {player.losses}
+                            </td>
+                            <td className="py-2 text-center">
+                              {player.points_diff}
+                            </td>
+                          </tr>
                         ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-gray-500">
-                        No players in this group.
-                      </p>
-                    )}
+                      </tbody>
+                    </table>
                   </CardContent>
                 </Card>
               ))}
