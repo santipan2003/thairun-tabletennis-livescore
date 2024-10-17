@@ -73,13 +73,13 @@ export default function Score() {
         {/* Player 1 Controls and Info */}
         <div className="flex flex-col items-center space-y-4">
           <Button
-            className="bg-white text-black w-14 h-10 sm:w-16 sm:h-12 md:w-20 md:h-16 lg:w-28 lg:h-24 text-lg sm:text-xl md:text-3xl lg:text-4xl"
+            className="bg-white text-black w-14 h-10 sm:w-16 sm:h-12 md:w-20 md:h-16 lg:w-28 lg:h-24 text-lg sm:text-6xl md:text-6xl lg:text-6xl"
             onClick={() => incrementScore(1)}
           >
             +
           </Button>
           <Button
-            className="bg-white text-black w-14 h-10 sm:w-16 sm:h-12 md:w-20 md:h-16 lg:w-28 lg:h-24 text-lg sm:text-xl md:text-3xl lg:text-4xl"
+            className="bg-white text-black w-14 h-10 sm:w-16 sm:h-12 md:w-20 md:h-16 lg:w-28 lg:h-24 text-lg sm:text-6xl md:text-6xl lg:text-6xl"
             onClick={() => decrementScore(1)}
           >
             -
@@ -141,13 +141,13 @@ export default function Score() {
         {/* Player 2 Controls */}
         <div className="flex flex-col items-center space-y-4">
           <Button
-            className="bg-white text-black w-14 h-10 sm:w-16 sm:h-12 md:w-20 md:h-16 lg:w-28 lg:h-24 text-lg sm:text-xl md:text-3xl lg:text-4xl"
+            className="bg-white text-black w-14 h-10 sm:w-16 sm:h-12 md:w-20 md:h-16 lg:w-28 lg:h-24 text-lg sm:text-6xl md:text-6xl lg:text-6xl"
             onClick={() => incrementScore(2)}
           >
             +
           </Button>
           <Button
-            className="bg-white text-black w-14 h-10 sm:w-16 sm:h-12 md:w-20 md:h-16 lg:w-28 lg:h-24 text-lg sm:text-xl md:text-3xl lg:text-4xl"
+            className="bg-white text-black w-14 h-10 sm:w-16 sm:h-12 md:w-20 md:h-16 lg:w-28 lg:h-24 text-lg sm:text-6xl md:text-6xl lg:text-6xl"
             onClick={() => decrementScore(2)}
           >
             -
