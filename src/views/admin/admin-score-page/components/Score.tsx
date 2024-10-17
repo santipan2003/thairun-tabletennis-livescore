@@ -173,7 +173,7 @@ export default function Score() {
       )}
 
       {/* Section History */}
-      <div className="absolute bottom-0 w-full flex flex-col items-center mb-10">
+      <div className="absolute bottom-0 w-full flex flex-col items-center mb-10 md:mb-20">
         <div className="flex flex-row items-center space-x-2 md:space-x-4">
           {history.map((entry, index) => {
             const [player1, player2] = entry.split(" - ");
