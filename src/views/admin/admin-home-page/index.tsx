@@ -1,17 +1,17 @@
 import { NextPage } from "next";
-import HomePage from "./components/HomePage";
+// import HomePage from "./components/HomePage";
 import Layout from "@/pages/components/Layout";
-import MatchCarousel from "../admin-match-page/components/MatchCarousel";
+// import MatchCarousel from "../admin-match-page/components/MatchCarousel";
 
 export const Home: NextPage = () => {
   return (
     <Layout>
       <div>
-        <MatchCarousel />
+        {/* <MatchCarousel /> */}
       </div>
 
       <div>
-        <HomePage />
+        {/* <HomePage /> */}
       </div>
     </Layout>
   );

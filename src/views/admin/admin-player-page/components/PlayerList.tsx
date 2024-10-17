@@ -13,6 +13,13 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"; // Shadcn pagination components
 import { Player } from "@/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const PlayerListPage: React.FC = () => {
   const router = useRouter();
@@ -20,12 +27,13 @@ const PlayerListPage: React.FC = () => {
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [tournamentName, setTournamentName] = useState("");
-  const [category, setCategory] = useState("");
-  const [division, setDivision] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [divisions, setDivisions] = useState<string[]>([]);
+  const [filteredDivisions, setFilteredDivisions] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedDivisions, setSelectedDivisions] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  const totalPages = Math.ceil(players.length / itemsPerPage);
+  const itemsPerPage = 20;
 
   // Fetch players from Firestore
   const fetchPlayers = useCallback(async () => {
@@ -58,10 +66,16 @@ const PlayerListPage: React.FC = () => {
     const sortedPlayers = Object.values(groupedPlayers).flat();
     setPlayers(sortedPlayers);
 
-    if (playerList.length > 0) {
-      setCategory(playerList[0].category);
-      setDivision(playerList[0].division);
-    }
+    // Extract unique categories and divisions
+    const uniqueCategories = Array.from(
+      new Set(playerList.map((player) => player.category))
+    );
+    const uniqueDivisions = Array.from(
+      new Set(playerList.map((player) => player.division))
+    );
+
+    setCategories(uniqueCategories);
+    setDivisions(uniqueDivisions);
   }, [tournament_id]);
 
   // Fetch tournament name
@@ -77,7 +91,27 @@ const PlayerListPage: React.FC = () => {
     fetchTournamentName();
   }, [tournament_id, fetchPlayers, fetchTournamentName]);
 
-  const paginatedPlayers = players.slice(
+  useEffect(() => {
+    // Filter divisions based on selected categories
+    if (selectedCategories.length === 0) {
+      setFilteredDivisions(divisions);
+    } else {
+      const filtered = players
+        .filter((player) => selectedCategories.includes(player.category))
+        .map((player) => player.division);
+      setFilteredDivisions(Array.from(new Set(filtered)));
+    }
+  }, [selectedCategories, divisions, players]);
+
+  const filteredPlayers = players.filter(
+    (player) =>
+      (selectedCategories.length === 0 ||
+        selectedCategories.includes(player.category)) &&
+      (selectedDivisions.length === 0 ||
+        selectedDivisions.includes(player.division))
+  );
+
+  const paginatedPlayers = filteredPlayers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -86,13 +120,47 @@ const PlayerListPage: React.FC = () => {
     setCurrentPage(page);
   };
 
+  const totalPages = Math.ceil(filteredPlayers.length / itemsPerPage);
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">
-          {tournamentName} - Player List ({category}, {division})
-        </h1>
+        <h1 className="text-2xl font-bold">{tournamentName} - Player List</h1>
         <AddPlayer setPlayers={setPlayers} onSuccess={fetchPlayers} />
+      </div>
+
+      <div className="flex space-x-4 mb-6">
+        <div className="flex flex-col">
+          <label className="text-gray-700 font-medium mb-2">Category</label>
+          <Select onValueChange={(value) => setSelectedCategories([value])}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select categories" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-gray-700 font-medium mb-2">Division</label>
+          <Select onValueChange={(value) => setSelectedDivisions([value])}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select divisions" />
+            </SelectTrigger>
+            <SelectContent>
+              {filteredDivisions.map((division) => (
+                <SelectItem key={division} value={division}>
+                  {division}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="overflow-x-auto">

@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, Users } from "lucide-react"; // Replace Upload with Users icon
+import { Settings, Users, Trophy } from "lucide-react"; // Replace Upload with Users icon
 import AddTournamentList from "./AddTournamentList";
 import Link from "next/link"; // Import Next.js Link
 import { Tournament } from "@/types"; // Import Tournament type from types/index.ts
@@ -90,6 +90,16 @@ const TournamentList: React.FC = () => {
                 >
                   <Users className="w-5 h-5" />
                   <span>Manage Group</span>
+                </Button>
+              </Link>
+
+              <Link href={`/admin/matches/${tournament.id}`}>
+                <Button
+                  variant="default"
+                  className="flex items-center space-x-2"
+                >
+                  <Trophy className="w-5 h-5" />
+                  <span>Manage Match</span>
                 </Button>
               </Link>
             </CardFooter>

@@ -46,13 +46,15 @@ const AddGroup: React.FC = () => {
   const router = useRouter();
   const { id: tournamentId } = router.query;
 
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>(["youth", "general"]);
   const [divisions, setDivisions] = useState<string[]>([]);
+  const [filteredDivisions, setFilteredDivisions] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedDivisions, setSelectedDivisions] = useState<string[]>([]);
   const [players, setPlayers] = useState<PlayerWithStats[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [canGenerate, setCanGenerate] = useState(false);
+  const [loading, setLoading] = useState(false); // Add loading state
 
   // Fetch player data from Firestore
   const fetchPlayerData = useCallback(async () => {
@@ -97,6 +99,18 @@ const AddGroup: React.FC = () => {
     );
   }, [selectedCategories, selectedDivisions]);
 
+  useEffect(() => {
+    // Filter divisions based on selected categories
+    if (selectedCategories.length === 0) {
+      setFilteredDivisions(divisions);
+    } else {
+      const filtered = players
+        .filter((player) => selectedCategories.includes(player.category))
+        .map((player) => player.division);
+      setFilteredDivisions(Array.from(new Set(filtered)));
+    }
+  }, [selectedCategories, divisions, players]);
+
   // Generate groups based on the same group value
   const generateGroups = () => {
     const filteredPlayers = players.filter(
@@ -127,8 +141,9 @@ const AddGroup: React.FC = () => {
     setGroups(generatedGroups);
   };
 
-  // Submit generated groups to Firestore
+  // Submit generated groups to Firestore with loading state
   const submitGroups = async () => {
+    setLoading(true); // Set loading to true when submission starts
     try {
       const groupCollection = collection(
         db,
@@ -159,6 +174,8 @@ const AddGroup: React.FC = () => {
     } catch (error) {
       console.error("Error submitting groups:", error);
       alert("Failed to submit groups.");
+    } finally {
+      setLoading(false); // Set loading back to false after submission
     }
   };
 
@@ -190,7 +207,7 @@ const AddGroup: React.FC = () => {
               <SelectValue placeholder="Select divisions" />
             </SelectTrigger>
             <SelectContent>
-              {divisions.map((division) => (
+              {filteredDivisions.map((division) => (
                 <SelectItem key={division} value={division}>
                   {division}
                 </SelectItem>
@@ -233,7 +250,6 @@ const AddGroup: React.FC = () => {
                         <th className="border-b pb-2 text-center">W</th>
                         <th className="border-b pb-2 text-center">L</th>
                         <th className="border-b pb-2 text-center">+/-</th>
-                        <th className="border-b pb-2 text-center">OVR</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -256,11 +272,6 @@ const AddGroup: React.FC = () => {
                           <td className="py-2 text-center">
                             {player.points_diff}
                           </td>
-                          <td className="py-2 text-center">
-                            {parseFloat(
-                              player.rank_score?.toString() || "0"
-                            ).toFixed(2)}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -271,7 +282,10 @@ const AddGroup: React.FC = () => {
           </div>
 
           <div className="mt-8 flex justify-end">
-            <Button onClick={submitGroups}>Submit Groups</Button>
+            {/* Show loading state while submitting */}
+            <Button onClick={submitGroups} disabled={loading}>
+              {loading ? "Submitting..." : "Submit Groups"}
+            </Button>
           </div>
         </div>
       )}

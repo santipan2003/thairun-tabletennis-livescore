@@ -21,9 +21,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Upload } from "lucide-react";
+import { Upload, Loader } from "lucide-react"; // Import Loader icon
 
-// Define Player interface with the required fields
 interface Player {
   player_id: number;
   firstName: string;
@@ -53,8 +52,8 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<Player[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [loading, setLoading] = useState(false); // Loading state
 
-  // Validate and Clean Data
   const validatePlayerData = (player: Partial<Player>): Player => ({
     player_id: player.player_id ?? 0,
     firstName: player.firstName ?? "Unknown",
@@ -69,7 +68,6 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
     group: player.group ?? "Not Assigned",
   });
 
-  // Handle CSV File Upload
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setCsvFile(event.target.files[0]);
@@ -85,8 +83,8 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
     }
   };
 
-  // Submit Players to Firestore
   const handleSubmit = async () => {
+    setLoading(true); // Start loading
     if (parsedData.length > 0) {
       const newPlayers: Player[] = [];
 
@@ -105,6 +103,7 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
       setIsSheetOpen(false);
       onSuccess();
     }
+    setLoading(false); // Stop loading
   };
 
   const resetState = () => {
@@ -196,8 +195,19 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
         )}
 
         <SheetFooter className="mt-6">
-          <Button onClick={handleSubmit} className="w-full">
-            Submit
+          <Button
+            onClick={handleSubmit}
+            className="w-full flex items-center justify-center"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader className="w-5 h-5 mr-2 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit"
+            )}
           </Button>
         </SheetFooter>
       </SheetContent>

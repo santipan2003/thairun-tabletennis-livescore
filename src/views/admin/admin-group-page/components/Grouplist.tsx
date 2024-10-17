@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-// import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PlayerWithStats extends Player {
   matches: number;
@@ -30,7 +36,12 @@ const GroupListPage: React.FC = () => {
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [tournamentName, setTournamentName] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [divisions, setDivisions] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedDivision, setSelectedDivision] = useState<string>("");
 
+  // ดึงข้อมูล groups และผู้เล่น
   const fetchGroupsWithPlayers = async (tournamentId: string) => {
     try {
       const groupCollection = collection(
@@ -67,6 +78,19 @@ const GroupListPage: React.FC = () => {
 
       fetchedGroups.sort((a, b) => a.group_id - b.group_id);
       setGroups(fetchedGroups);
+
+      // Extract categories and divisions
+      const uniqueCategories = Array.from(
+        new Set(fetchedGroups.map((group) => group.category))
+      );
+      setCategories(uniqueCategories);
+      setSelectedCategory(uniqueCategories[0] || ""); // Default selection
+
+      const uniqueDivisions = Array.from(
+        new Set(fetchedGroups.map((group) => group.division))
+      );
+      setDivisions(uniqueDivisions);
+      setSelectedDivision(uniqueDivisions[0] || ""); // Default selection
     } catch (error) {
       console.error("Error fetching groups and players:", error);
     }
@@ -91,6 +115,12 @@ const GroupListPage: React.FC = () => {
     }
   }, [tournament_id]);
 
+  // Filter groups by selected category and division
+  const filteredGroups = groups.filter(
+    (group) =>
+      group.category === selectedCategory && group.division === selectedDivision
+  );
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -100,19 +130,53 @@ const GroupListPage: React.FC = () => {
         </Link>
       </div>
 
+      <div className="flex space-x-4 mb-6">
+        <div className="flex flex-col">
+          <label className="text-gray-700 font-medium mb-2">Category</label>
+          <Select onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-gray-700 font-medium mb-2">Division</label>
+          <Select onValueChange={setSelectedDivision}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select division" />
+            </SelectTrigger>
+            <SelectContent>
+              {divisions.map((division) => (
+                <SelectItem key={division} value={division}>
+                  {division}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <Card className="shadow-lg border border-gray-300 rounded-2xl">
         <CardHeader>
           <CardTitle className="text-lg font-bold">Groups Overview</CardTitle>
-          {groups.length > 0 && (
+          {filteredGroups.length > 0 && (
             <p className="text-sm text-gray-500">
-              Category: {groups[0].category} | Division: {groups[0].division}
+              Category: {selectedCategory} | Division: {selectedDivision}
             </p>
           )}
         </CardHeader>
         <CardContent>
-          {groups.length > 0 ? (
+          {filteredGroups.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-              {groups.map((group) => (
+              {filteredGroups.map((group) => (
                 <Card
                   key={group.group_id}
                   className="shadow-md border border-gray-200 rounded-xl"
