@@ -10,6 +10,12 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontSize: {
+        "10xl": "10rem",
+        "11xl": "12rem",
+        "12xl": "14rem",
+        "13xl": "18rem",
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
