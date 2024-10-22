@@ -36,9 +36,11 @@ const MatchList: React.FC = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">{tournamentName} - Grouping</h1>
-        <Link href={`/admin/generate-matches/${tournament_id}`} passHref>
-          <Button variant="default">Generate Match</Button>
-        </Link>
+        {tournament_id && (
+          <Link href={`/admin/generate-matches/${tournament_id}`} passHref>
+            <Button variant="default">Generate Match</Button>
+          </Link>
+        )}
       </div>
     </div>
   );

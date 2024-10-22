@@ -79,6 +79,9 @@ const GroupListPage: React.FC = () => {
       fetchedGroups.sort((a, b) => a.group_id - b.group_id);
       setGroups(fetchedGroups);
 
+      // Log the fetched groups
+      console.log("Fetched Groups:", fetchedGroups);
+
       // Extract categories and divisions
       const uniqueCategories = Array.from(
         new Set(fetchedGroups.map((group) => group.category))

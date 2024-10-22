@@ -31,7 +31,7 @@ interface PlayerWithStats extends Player {
   matches: number;
   wins: number;
   losses: number;
-  points_diff: number; // Points difference (e.g., +/- score)
+  points_diff: number;
 }
 
 interface Group {
@@ -54,7 +54,7 @@ const AddGroup: React.FC = () => {
   const [players, setPlayers] = useState<PlayerWithStats[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [canGenerate, setCanGenerate] = useState(false);
-  const [loading, setLoading] = useState(false); // Add loading state
+  const [loading, setLoading] = useState(false);
 
   // Fetch player data from Firestore
   const fetchPlayerData = useCallback(async () => {
@@ -67,11 +67,11 @@ const AddGroup: React.FC = () => {
       const data = doc.data() as Player;
       return {
         ...data,
-        player_id: doc.id,
+        player_id: doc.id, // Save the document ID
         matches: 0,
         wins: 0,
         losses: 0,
-        points_diff: 0, // Default value
+        points_diff: 0,
       };
     }) as PlayerWithStats[];
 
@@ -143,7 +143,7 @@ const AddGroup: React.FC = () => {
 
   // Submit generated groups to Firestore with loading state
   const submitGroups = async () => {
-    setLoading(true); // Set loading to true when submission starts
+    setLoading(true);
     try {
       const groupCollection = collection(
         db,
@@ -151,6 +151,7 @@ const AddGroup: React.FC = () => {
       );
 
       for (const group of groups) {
+        // Insert group data
         const groupDoc = await addDoc(groupCollection, {
           group_id: group.group_id,
           group_name: group.name,
@@ -164,8 +165,12 @@ const AddGroup: React.FC = () => {
           `tournaments/${tournamentId}/groups/${groupDoc.id}/players`
         );
 
+        // Insert individual player stats and keep player IDs
         for (const player of group.players) {
-          await addDoc(playerCollection, { ...player });
+          await addDoc(playerCollection, {
+            ...player,
+            player_id: player.player_id,
+          });
         }
       }
 
@@ -175,7 +180,7 @@ const AddGroup: React.FC = () => {
       console.error("Error submitting groups:", error);
       alert("Failed to submit groups.");
     } finally {
-      setLoading(false); // Set loading back to false after submission
+      setLoading(false);
     }
   };
 
