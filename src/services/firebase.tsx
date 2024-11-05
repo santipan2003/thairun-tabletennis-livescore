@@ -7,13 +7,13 @@ import { initializeApp } from "firebase/app";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyD_C9tsfpPXMDWga2j9zOxfbKB8Nt8xZzo",
-  authDomain: "thairun-table-tennis.firebaseapp.com",
-  projectId: "thairun-table-tennis",
-  storageBucket: "thairun-table-tennis.appspot.com",
-  messagingSenderId: "709749094210",
-  appId: "1:709749094210:web:dec85b75fc35b59227badb",
-  measurementId: "G-CS2GBQV2CZ",
+  apiKey: "AIzaSyAh8qB2ANAOU6F8UZgunS_hCHWxZYMiG0M",
+  authDomain: "pingpong-thairun-sv2.firebaseapp.com",
+  projectId: "pingpong-thairun-sv2",
+  storageBucket: "pingpong-thairun-sv2.firebasestorage.app",
+  messagingSenderId: "1097067801646",
+  appId: "1:1097067801646:web:b6a71759abcf56f91403bf",
+  measurementId: "G-DC79YR9LQ7",
 };
 
 // Initialize Firebase

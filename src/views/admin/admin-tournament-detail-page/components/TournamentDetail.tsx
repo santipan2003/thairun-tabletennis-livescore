@@ -1,8 +1,7 @@
 import { useRouter } from "next/router";
-import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import db from "@/services/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import axios from "axios";
 
 interface Tournament {
   id: string;
@@ -18,10 +17,16 @@ const TournamentDetail: React.FC = () => {
   const [tournament, setTournament] = useState<Tournament | null>(null);
 
   const fetchTournamentDetail = async (id: string) => {
-    const tournamentDoc = doc(db, "tournaments", id);
-    const docSnap = await getDoc(tournamentDoc);
-    if (docSnap.exists()) {
-      setTournament({ id: docSnap.id, ...docSnap.data() } as Tournament);
+    try {
+      const response = await axios.get(`/api/admin/tournaments/byID/fetch-tournament-detail`, {
+        params: { id },
+      });
+      const { tournament } = response.data;
+      if (tournament) {
+        setTournament(tournament);
+      }
+    } catch (error) {
+      console.error("Error fetching tournament details:", error);
     }
   };
 

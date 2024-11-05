@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
-import { getDocs, collection } from "firebase/firestore";
-import db from "@/services/firestore";
 import { AddPlayer } from "./AddPlayer";
 import {
   Pagination,
@@ -12,7 +10,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"; // Shadcn pagination components
-import { Player } from "@/types";
+import { Player } from "@/types"; // Import the Player interface
 import {
   Select,
   SelectContent,
@@ -20,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import axios from "axios";
 
 const PlayerListPage: React.FC = () => {
   const router = useRouter();
@@ -38,52 +37,34 @@ const PlayerListPage: React.FC = () => {
   // Fetch players from Firestore
   const fetchPlayers = useCallback(async () => {
     if (!tournament_id) return;
-    const playerCollection = collection(
-      db,
-      `tournaments/${tournament_id}/players`
-    );
-    const snapshot = await getDocs(playerCollection);
-    const playerList = snapshot.docs.map((doc) => doc.data() as Player);
 
-    // Group players by their group
-    const groupedPlayers: { [key: string]: Player[] } = {};
-    playerList.forEach((player) => {
-      const group = player.group ?? "Not Assigned";
-      if (!groupedPlayers[group]) {
-        groupedPlayers[group] = [];
-      }
-      groupedPlayers[group].push(player);
-    });
+    try {
+      const response = await axios.get(`/api/admin/players/fetch-players`, {
+        params: { tournament_id },
+      });
 
-    // Sort each group by rank_score in descending order
-    Object.keys(groupedPlayers).forEach((group) => {
-      groupedPlayers[group].sort(
-        (a, b) => (b.rank_score ?? 0) - (a.rank_score ?? 0)
-      );
-    });
+      const { players, categories, divisions } = response.data;
 
-    // Flatten the sorted groups back into a single array
-    const sortedPlayers = Object.values(groupedPlayers).flat();
-    setPlayers(sortedPlayers);
-
-    // Extract unique categories and divisions
-    const uniqueCategories = Array.from(
-      new Set(playerList.map((player) => player.category))
-    );
-    const uniqueDivisions = Array.from(
-      new Set(playerList.map((player) => player.division))
-    );
-
-    setCategories(uniqueCategories);
-    setDivisions(uniqueDivisions);
+      setPlayers(players);
+      setCategories(categories);
+      setDivisions(divisions);
+    } catch (error) {
+      console.error("Error fetching players:", error);
+    }
   }, [tournament_id]);
 
   // Fetch tournament name
   const fetchTournamentName = useCallback(async () => {
-    const tournamentRef = collection(db, "tournaments");
-    const snapshot = await getDocs(tournamentRef);
-    const tournament = snapshot.docs.find((doc) => doc.id === tournament_id);
-    if (tournament) setTournamentName(tournament.data().tournament_name);
+    try {
+      const response = await axios.get(`/api/admin/players/fetch-tournaments`, {
+        params: { tournament_id },
+      });
+
+      const { tournamentName } = response.data;
+      if (tournamentName) setTournamentName(tournamentName);
+    } catch (error) {
+      console.error("Error fetching tournament name:", error);
+    }
   }, [tournament_id]);
 
   useEffect(() => {

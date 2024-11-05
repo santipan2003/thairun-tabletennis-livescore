@@ -1,4 +1,3 @@
-// types/index.ts
 export interface Tournament {
   id: string;
   tournament_name: string;
@@ -19,4 +18,27 @@ export interface Player {
   rank_score?: number;
   rank_number?: number;
   group?: string;
+  _isWinner: boolean | "pending";
+  nextmatch_id?: string | null;
+  rank?: number;
+}
+
+export interface Group {
+  id: string;
+  division: string;
+  group_name: string;
+  players: Player[];
+  group_id: number;
+}
+
+export interface Match {
+  id: string;
+  match_id: string;
+  time: Date | null;
+  table: number | null;
+  players: Player[];
+  group: number;
+  division: string;
+  nextmatch_id: string | null;
+  matchType: string;
 }

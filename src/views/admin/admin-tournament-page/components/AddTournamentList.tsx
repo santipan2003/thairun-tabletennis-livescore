@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { addDoc, collection } from "firebase/firestore";
-import db from "@/services/firestore";
 import {
   Sheet,
   SheetContent,
@@ -11,6 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import axios from "axios";
 
 interface AddTournamentListProps {
   onAddSuccess: () => void;
@@ -29,23 +28,30 @@ const AddTournamentList: React.FC<AddTournamentListProps> = ({
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      await addDoc(collection(db, "tournaments"), {
-        tournament_name: tournamentName,
-        table_count: Number(tableCount),
-        start_date: startDate,
-        end_date: endDate,
-      });
-      setTournamentName("");
-      setTableCount("");
-      setStartDate("");
-      setEndDate("");
-      setLoading(false);
-      setIsSheetOpen(false);
-      onAddSuccess();
+      const response = await axios.post(
+        `/api/admin/tournaments/add-tournaments`,
+        {
+          tournament_name: tournamentName,
+          table_count: Number(tableCount),
+          start_date: startDate,
+          end_date: endDate,
+        }
+      );
+
+      if (response.data.success) {
+        setTournamentName("");
+        setTableCount("");
+        setStartDate("");
+        setEndDate("");
+        setIsSheetOpen(false);
+        onAddSuccess();
+      } else {
+        console.error("Error adding tournament:", response.data.message);
+      }
     } catch (error) {
       console.error("Error adding tournament:", error);
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (

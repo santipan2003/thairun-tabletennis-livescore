@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import Papa from "papaparse";
-import { collection, addDoc } from "firebase/firestore";
-import db from "@/services/firestore";
 import {
   Sheet,
   SheetContent,
@@ -22,20 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Upload, Loader } from "lucide-react"; // Import Loader icon
-
-interface Player {
-  player_id: number;
-  firstName: string;
-  lastName: string;
-  nationality: string;
-  dob: string;
-  team_name?: string;
-  category: string;
-  division: string;
-  rank_score?: number;
-  rank_number?: number;
-  group?: string;
-}
+import { Player } from "@/types"; // Import the Player interface
+import axios from "axios";
 
 interface AddPlayerProps {
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
@@ -66,6 +52,7 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
     rank_score: player.rank_score ?? 0,
     rank_number: player.rank_number ?? 0,
     group: player.group ?? "Not Assigned",
+    _isWinner: player._isWinner ?? "pending", // Ensure _isWinner is included
   });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,22 +73,22 @@ export const AddPlayer: React.FC<AddPlayerProps> = ({
   const handleSubmit = async () => {
     setLoading(true); // Start loading
     if (parsedData.length > 0) {
-      const newPlayers: Player[] = [];
+      try {
+        const response = await axios.post(`/api/admin/players/add-players`, {
+          tournament_id,
+          players: parsedData,
+        });
 
-      for (const player of parsedData) {
-        try {
-          await addDoc(collection(db, `tournaments/${tournament_id}/players`), {
-            ...player,
-          });
-          newPlayers.push(player);
-        } catch (error) {
-          console.error("Error adding player:", error);
+        if (response.data.success) {
+          setPlayers((prevPlayers) => [...prevPlayers, ...parsedData]);
+          setIsSheetOpen(false);
+          onSuccess();
+        } else {
+          console.error("Error adding players:", response.data.message);
         }
+      } catch (error) {
+        console.error("Error adding players:", error);
       }
-
-      setPlayers((prevPlayers) => [...prevPlayers, ...newPlayers]);
-      setIsSheetOpen(false);
-      onSuccess();
     }
     setLoading(false); // Stop loading
   };

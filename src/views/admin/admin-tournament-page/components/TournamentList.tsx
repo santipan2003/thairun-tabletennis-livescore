@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { getDocs, collection } from "firebase/firestore";
-import db from "@/services/firestore";
 import {
   Card,
   CardContent,
@@ -13,18 +11,21 @@ import { Settings, Users, Trophy } from "lucide-react"; // Replace Upload with U
 import AddTournamentList from "./AddTournamentList";
 import Link from "next/link"; // Import Next.js Link
 import { Tournament } from "@/types"; // Import Tournament type from types/index.ts
+import axios from "axios";
 
 const TournamentList: React.FC = () => {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
 
   const fetchTournaments = async () => {
-    const tournamentCollection = collection(db, "tournaments");
-    const tournamentSnapshot = await getDocs(tournamentCollection);
-    const tournamentList = tournamentSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Tournament[];
-    setTournaments(tournamentList);
+    try {
+      const response = await axios.get(
+        `/api/admin/tournaments/fetch-tournaments`
+      );
+      const { tournaments } = response.data;
+      setTournaments(tournaments);
+    } catch (error) {
+      console.error("Error fetching tournaments:", error);
+    }
   };
 
   useEffect(() => {
