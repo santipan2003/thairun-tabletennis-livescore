@@ -29,13 +29,25 @@ const MatchSchedule: React.FC<MatchScheduleProps> = ({ matchSchedule }) => {
             </td>
             <td>{match.table}</td>
             <td>
-              (<strong>{match.players[0]?.firstName || "Unknown"}</strong>{" "}
+              (
+              <strong>
+                {match.players[0]?.firstName ||
+                  match.players[0]?.player?.firstName ||
+                  "Unknown"}
+              </strong>{" "}
               <span style={{ color: "red", fontWeight: "bold" }}>
-                {match.players[0]?.lastName}
+                {match.players[0]?.lastName ||
+                  match.players[0]?.player?.lastName}
               </span>
-              ) vs (<strong>{match.players[1]?.firstName || "Unknown"}</strong>{" "}
+              ) vs (
+              <strong>
+                {match.players[1]?.firstName ||
+                  match.players[1]?.player?.firstName ||
+                  "Unknown"}
+              </strong>{" "}
               <span style={{ color: "red", fontWeight: "bold" }}>
-                {match.players[1]?.lastName}
+                {match.players[1]?.lastName ||
+                  match.players[1]?.player?.lastName}
               </span>
               )
             </td>

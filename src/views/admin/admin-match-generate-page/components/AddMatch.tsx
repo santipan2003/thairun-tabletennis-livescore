@@ -148,6 +148,7 @@ export default function AddMatch() {
 
       const { schedule, knockoutStages: updatedKnockoutStages } = response.data;
       setMatchSchedule(schedule);
+      console.log("Updated schedule :", schedule);
       setKnockoutStages(updatedKnockoutStages);
     } catch (error) {
       console.error("Error adding knockout round:", error);
@@ -228,31 +229,54 @@ export default function AddMatch() {
             <h2 className="text-xl font-bold">Match Schedule</h2>
             <MatchSchedule matchSchedule={matchSchedule} />
           </div>
-          <div className="mt-4">
-            <h2 className="text-xl font-bold">Add Knockout Round</h2>
-            <select
-              value={selectedDivision}
-              onChange={(e) => setSelectedDivision(e.target.value)}
-            >
-              <option value="">Select Division</option>
-              {Object.keys(knockoutStages).map((division) => (
-                <option key={division} value={division}>
-                  {division} ({knockoutStages[division]})
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => addKnockoutRound(selectedDivision)}
-              disabled={!selectedDivision}
-            >
-              Add Knockout Round
-            </button>
+          <div className="mt-4 p-6 bg-white rounded-lg shadow-md">
+            <h2 className="text-xl font-bold mb-4">Add Knockout Round</h2>
+            <div className="flex items-center space-x-4">
+              <div className="flex-grow">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select Division
+                </label>
+                <select
+                  value={selectedDivision}
+                  onChange={(e) => setSelectedDivision(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Choose Division</option>
+                  {Object.keys(knockoutStages).map((division) => (
+                    <option key={division} value={division}>
+                      {division} ({knockoutStages[division]})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={() => addKnockoutRound(selectedDivision)}
+                disabled={!selectedDivision}
+                className={`p-2 px-2 rounded-lg font-semibold text-white mt-4 ${
+                  selectedDivision
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "bg-gray-400 cursor-not-allowed"
+                }`}
+              >
+                Add Round
+              </button>
+            </div>
           </div>
-          <div className="mt-4">
-            <h2 className="text-xl font-bold">Submit Match Schedule</h2>
+
+          <div className="mt-6 p-6 bg-white rounded-lg shadow-md">
+            <h2 className="text-xl font-bold mb-4">Submit Match Schedule</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Make sure all knockout rounds have been added before submitting
+              the schedule.
+            </p>
             <button
               onClick={submitMatchSchedule}
               disabled={loading || matchSchedule.length === 0}
+              className={`w-full p-3 rounded-lg font-semibold text-white ${
+                loading || matchSchedule.length === 0
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-black hover:bg-gray-800"
+              }`}
             >
               {loading ? "Submitting..." : "Submit Schedule"}
             </button>

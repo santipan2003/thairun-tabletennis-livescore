@@ -19,12 +19,19 @@ interface Group {
   players: string[]; // Array of player IDs (strings)
 }
 
+// Define the PlayerMatchData interface for player-specific match data
+interface PlayerMatchData {
+  player: Player; // Reference to the Player object
+  score: number; // Score specific to this match
+  _isWinner: boolean | "pending"; // Win status specific to this match
+}
+
 // Define the Match interface
 interface Match {
   match_id: string;
   time: string | null; // Time is a string to use .toLocaleString()
   table: number | null;
-  players: Player[];
+  players: PlayerMatchData[]; // Array of PlayerMatchData for match-specific details
   group: number;
   division: string;
   nextmatch_id?: string | null;
@@ -140,7 +147,11 @@ const generateMatchSchedule = (
         match_id,
         time: new Date(initialTime).toLocaleString(), // Use .toLocaleString() for formatted time
         table: currentTable,
-        players: match,
+        players: match.map((player) => ({
+          player, // Reference to the player object
+          score: 0, // Initialize score to 0
+          _isWinner: "pending", // Initialize _isWinner to "pending"
+        })),
         group,
         division,
         nextmatch_id: null,

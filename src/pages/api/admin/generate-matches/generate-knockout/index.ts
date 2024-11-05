@@ -1,25 +1,29 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-// Define the Player interface
 interface Player {
   firstName: string;
   lastName: string;
   rank_score: number;
-  _isWinner: boolean | "pending";
   group: string;
   rank: number;
   nextmatch_id?: string;
 }
 
-// Define the Match interface
+interface PlayerScore {
+  player: Player;
+  score: number; // Score specific to this match
+  _isWinner: boolean | "pending"; // Winner status specific to this match
+}
+
 interface Match {
   match_id: string;
-  time: string | null; // Time is a string to use .toLocaleString()
+  time: string | null;
   table: number | null;
-  players: Player[];
+  players: PlayerScore[]; // Array of PlayerScore objects instead of Player objects
   group: number;
   division: string;
   nextmatch_id?: string;
+  matchType: string;
 }
 
 // Define the Group interface
@@ -114,7 +118,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     division: string,
     nextmatch_id?: string
   ) => {
-    // Find the last valid match with a non-null time and table
     let lastValidMatch = schedule
       .slice()
       .reverse()
@@ -128,7 +131,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const lastMatchTable = lastValidMatch.table!;
     currentTable = lastMatchTable + 1;
 
-    // Adjust the initial time and table number
     if (currentTable > tableCount) {
       initialTime.setTime(lastMatchTime.getTime() + 25 * 60000);
       currentTable = 1;
@@ -136,7 +138,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       initialTime.setTime(lastMatchTime.getTime());
     }
 
-    // Add the match to the schedule
+    // Add the match to the schedule with PlayerScore structure
     schedule.push({
       match_id,
       time:
@@ -147,10 +149,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         player1.firstName === "BYE" || player2.firstName === "BYE"
           ? null
           : currentTable,
-      players: [player1, player2],
+      players: [
+        { player: player1, score: 0, _isWinner: "pending" },
+        { player: player2, score: 0, _isWinner: "pending" },
+      ],
       group: currentKnockoutStageSize,
       division,
       nextmatch_id,
+      matchType: "Best of 3",
     });
     matchCounter++;
   };
@@ -165,25 +171,23 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return match.division === comparisonString;
     });
 
-    // Add final matches to the schedule
     for (let i = 0; i < previousMatches.length; i += 2) {
       const match_id = matchCounter.toString().padStart(4, "0");
+
       const player1: Player = {
         firstName: `Winner of Match ${previousMatches[i].match_id}`,
         lastName: "",
         rank_score: 0,
-        _isWinner: "pending",
-        group: "", // Provide appropriate value or default
-        rank: 0, // Provide appropriate value or default
+        group: "",
+        rank: 0,
       };
 
       const player2: Player = {
         firstName: `Winner of Match ${previousMatches[i + 1].match_id}`,
         lastName: "",
         rank_score: 0,
-        _isWinner: "pending",
-        group: "", // Provide appropriate value or default
-        rank: 0, // Provide appropriate value or default
+        group: "",
+        rank: 0,
       };
 
       previousMatches[i].nextmatch_id = match_id;
@@ -223,7 +227,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             firstName: `Rank ${match[0].rank} Group ${match[0].group}`,
             lastName: "",
             rank_score: 0,
-            _isWinner: "pending",
             group: match[0].group,
             rank: match[0].rank,
           }
@@ -231,7 +234,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             firstName: "BYE",
             lastName: "",
             rank_score: 0,
-            _isWinner: false,
             group: "",
             rank: 0,
           };
@@ -243,7 +245,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             firstName: `Rank ${match[1].rank} Group ${match[1].group}`,
             lastName: "",
             rank_score: 0,
-            _isWinner: "pending",
             group: match[1].group,
             rank: match[1].rank,
           }
@@ -251,7 +252,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             firstName: "BYE",
             lastName: "",
             rank_score: 0,
-            _isWinner: false,
             group: "",
             rank: 0,
           };
@@ -292,13 +292,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
       const winner1 = previousMatch1.players.find(
         (player) => player._isWinner === true
-      );
+      )?.player;
       const player1: Player = winner1
         ? {
             firstName: winner1.firstName,
             lastName: "",
             rank_score: 0,
-            _isWinner: "pending",
             group: "", // Provide appropriate value or default
             rank: 0, // Provide appropriate value or default
           }
@@ -306,20 +305,18 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             firstName: `Winner of Match ${previousMatch1.match_id}`,
             lastName: "",
             rank_score: 0,
-            _isWinner: "pending",
             group: "", // Provide appropriate value or default
             rank: 0, // Provide appropriate value or default
           };
 
       const winner2 = previousMatch2.players.find(
         (player) => player._isWinner === true
-      );
+      )?.player;
       const player2: Player = winner2
         ? {
             firstName: winner2.firstName,
             lastName: "",
             rank_score: 0,
-            _isWinner: "pending",
             group: "", // Provide appropriate value or default
             rank: 0, // Provide appropriate value or default
           }
@@ -327,7 +324,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             firstName: `Winner of Match ${previousMatch2.match_id}`,
             lastName: "",
             rank_score: 0,
-            _isWinner: "pending",
             group: "", // Provide appropriate value or default
             rank: 0, // Provide appropriate value or default
           };
@@ -353,7 +349,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         firstName: `Winner of Match ${match_id}`,
         lastName: "",
         rank_score: 0,
-        _isWinner: "pending",
+        group: "",
+        rank: 0,
       };
       addMatchToSchedule(
         match_id,
@@ -375,5 +372,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Update the knockout stages and return the response
   knockoutStages[division] = nextKnockoutStageSize;
+  console.log(schedule); // Log the schedule
   return res.status(200).json({ schedule, knockoutStages });
 }

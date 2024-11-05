@@ -239,7 +239,13 @@ const MatchList: React.FC = () => {
                     {match.matchType || "N/A"}
                   </td>
                   <td className="py-4 px-6 border-b text-gray-800 text-sm">
-                    <Link href={`/admin/scores/${match.id}`} passHref>
+                    <Link
+                      href={{
+                        pathname: `/admin/scores/${match.id}`,
+                        query: { tournamentId: tournament_id },
+                      }}
+                      passHref
+                    >
                       <Button variant="default">LIVE!</Button>
                     </Link>
                   </td>
